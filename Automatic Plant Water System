@@ -1,0 +1,108 @@
+#include <ESP8266WiFi.h>
+const char* ssid = "usrid"; //wifi user_id connected to system
+const char* password = "password"; //wifi password connected to system
+WiFiServer server(80);
+//const int VAL_PROBE = 0; // Analog pin 0
+const int MOISTURE_LEVEL = 400; /* the value after the LED goes ON */
+int moisture;
+void setup() {
+ WiFi.mode(WIFI_OFF);
+ Serial.begin(115200);
+ pinMode(D1, OUTPUT);
+ //digitalWrite(5, HIGH);
+ // Connect to WiFi network
+ Serial.println();
+ Serial.println();
+ Serial.print("Connecting to ");
+ Serial.println(ssid);
+ WiFi.begin(ssid, password);
+ while (WiFi.status() != WL_CONNECTED) {
+ delay(500);
+ Serial.print(".");
+ }
+ Serial.println("");
+ Serial.println("WiFi connected");
+ // Start the server
+ server.begin();
+ Serial.println("Server started");
+ // Print the IP addres
+ Serial.print("Use this URL to connect: ");
+ Serial.print("http://");
+ Serial.print(WiFi.localIP());
+ Serial.println("/");
+}
+void LedState(int state) {
+digitalWrite(D1, state);
+}
+void loop() {
+ // Check if a client has connected
+moisture = analogRead(A0);
+ Serial.println("value=");
+Serial.println(moisture);
+/*if(moisture > MOISTURE_LEVEL) {
+ // Serial.println("hello");
+//LedState(HIGH);
+digitalWrite(D1,HIGH);
+} 
+else {
+  digitalWrite(D1,LOW);
+//LedState(LOW);
+}*/
+delay(1000);
+ WiFiClient client = server.available();
+ if (!client) {
+ return;
+ }
+ // Wait until the client sends some data
+ /*Serial.println("new client");
+ while(!client.available()){
+ delay(100);*/
+ // Read the first line of the request
+ String request = client.readStringUntil('\r');
+ Serial.println(request);
+ client.flush();
+ // Match the request
+// Set ledPin according to the request
+//digitalWrite(ledPin, value);
+ // Return the response
+ client.println("HTTP/1.1 200 OK");
+ client.println("Content-Type: text/html");
+ client.println(""); // do not forget this one
+ client.println("<!DOCTYPE HTML>");
+ client.println("<html>");
+ client.println("<head>");
+ client.println("<meta http-equiv='refresh' content='5'/>");
+//client.println("<metaname='apple-mobile-web-app-status-bar-style'content='blacktranslucent' />");
+client.println("</head>");
+ client.println("<body bgcolor = \"#f7e6ec\">");
+ client.println("<hr/><hr>");
+client.println("<h1><center>AUTOMATIC PLANT WATERING SYSTEM</center></h1>");
+ client.println("<hr/><hr>");
+ client.println("<br><br>");
+ client.println("<br><br>");
+client.println("<center>");
+client.println("<font color='blue'>");
+if(moisture > MOISTURE_LEVEL) {
+digitalWrite(D1, LOW);
+//LedState(HIGH);
+client.println("<h1>moisture=");
+client.println(moisture);
+client.println("</h1>");
+client.print("<h1><b>Moisture>400 motor is turned off</b>");
+client.println("</h1>");
+}
+else {
+digitalWrite(D1, HIGH);
+//LedState(LOW);
+client.println("<h1>moisture=");
+client.println(moisture);
+client.println("</h1>");
+client.print("<h1><b>Moisture<400 motor is turned on</b>");
+client.println("</h1>");
+}
+client.println("</font>");
+client.println("</center>");
+client.println("</html>");
+Serial.println("Client disonnected");
+Serial.println("");
+}
